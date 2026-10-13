@@ -192,8 +192,7 @@ footer p { max-width: 760px; margin: 8px auto 0; }
       <label class="opt"><input type="radio" name="financing_interest" value="No">No, I plan to pay without financing</label>
     </fieldset>
 
-    <!-- Shown only to people who said no to financing -->
-    <fieldset class="q" data-key="financing_prequal" data-if="financing_interest=No">
+    <fieldset class="q" data-key="financing_prequal">
       <legend>Many patients spread the cost out even when they've saved up. Would you like to see if you prequalify anyway? <span class="req">*</span></legend>
       <label class="opt"><input type="radio" name="financing_prequal" value="Yes">Yes, see if I prequalify</label>
       <label class="opt"><input type="radio" name="financing_prequal" value="No">No thanks, continue</label>
@@ -267,10 +266,18 @@ footer p { max-width: 760px; margin: 8px auto 0; }
   var answers = {}, history = [], cur = 0, started = false;
   var bar = document.getElementById('bar'), count = document.getElementById('count'), back = document.getElementById('back');
 
-  function applies(q) {
-    var cond = q.dataset.if; if (!cond) return true;
-    var kv = cond.split('='); return answers[kv[0]] === kv[1];
-  }
+  /* Branching: a question is asked only when its rule passes (no rule = always asked).
+     - Gum-disease question only for people missing 3 or fewer teeth
+     - "No" to payment plans → one more financing nudge
+     - Credit only for people open to financing; "No" twice skips straight to contact
+     - Income only for credit under 700 */
+  var RULES = {
+    loose_teeth_or_gum_disease: function (a) { return a.teeth_missing === '3 or fewer'; },
+    financing_prequal: function (a) { return a.financing_interest === 'No'; },
+    credit_range: function (a) { return a.financing_interest === 'Yes' || a.financing_prequal === 'Yes'; },
+    household_income: function (a) { return RULES.credit_range(a) && (a.credit_range === 'Under 660' || a.credit_range === '660-699'); }
+  };
+  function applies(q) { var rule = RULES[q.dataset.key]; return !rule || rule(answers); }
   function visible() { return all.filter(applies); }
   function render() {
     var vis = visible(), idx = vis.indexOf(all[cur]);
@@ -325,7 +332,9 @@ footer p { max-width: 760px; margin: 8px auto 0; }
     var txt = function (cb) { return cb.checked ? cb.nextElementSibling.textContent.trim() : ''; };
     var eventId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + Math.random().toString(16).slice(2);
     var at = attr();
-    var payload = Object.assign({}, at, answers, {
+    // Send only answers on the path actually taken (drops answers made stale by going back).
+    var path = {}; visible().forEach(function (q) { if (answers[q.dataset.key] != null) path[q.dataset.key] = answers[q.dataset.key]; });
+    var payload = Object.assign({}, at, path, {
       firstName: fn.value.trim(), lastName: ln.value.trim(), fullName: (fn.value + ' ' + ln.value).trim(),
       email: em.value.trim(), phone: phone.value.trim(),
       sms_consent: sms.checked ? 'Yes' : 'No', marketing_consent: mkt.checked ? 'Yes' : 'No',
