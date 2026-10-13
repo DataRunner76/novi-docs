@@ -4,7 +4,8 @@ Single-page, paid-traffic landing page for Novi Docs (full-arch dental implants,
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | The page (inline CSS/JS, no build step) |
+| `index.html` | The main page (inline CSS/JS, no build step) |
+| `eval.html` | `/eval` — one-question-at-a-time eligibility quiz (14–15 questions) |
 | `logo.svg`, `logo-white.svg`, `favicon.svg` | Brand marks (wordmark is outlined paths, no font dependency) |
 | `attribution.js` | Captures UTMs / click IDs (first + last touch, 90 days) → sent with each lead |
 | `api/lead.js` | `POST /api/lead` — validates and forwards leads to `GHL_WEBHOOK_URL` |
