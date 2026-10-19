@@ -752,6 +752,12 @@ footer { background: var(--navy); padding: clamp(28px, 4vw, 44px) var(--pad) cal
       phone.value = d.length > 6 ? '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6) : d.length > 3 ? '(' + d.slice(0, 3) + ') ' + d.slice(3) : d.length ? '(' + d : '';
     });
 
+    /* Qualified lead = doesn't need financing, or credit 600+. Only qualified leads are reported to Google Ads. */
+    function isQualified(a) {
+      if (a.financing_interest === "No, I don't need financing") return true;
+      return a.credit_range === '600–700' || a.credit_range === '700+';
+    }
+
     var form = document.getElementById('leadForm'), btn = document.getElementById('leadSubmit'), msg = document.getElementById('leadMsg');
     function fail(text, el) {
       msg.textContent = text;
@@ -780,6 +786,7 @@ footer { background: var(--navy); padding: clamp(28px, 4vw, 44px) var(--pad) cal
         sms_consent_language: consentText(sms), marketing_consent_language: consentText(mkt),
         consent_timestamp: new Date().toISOString(), consent_page_url: location.href,
         consent_method: 'Website form — optional checkbox, unchecked by default',
+        qualified: isQualified(answers) ? 'Yes' : 'No',
         brand: 'Novi Docs', location: 'Chicago, IL',
         source: location.hostname, form_name: 'novidocs_consultation', event_id: eventId,
         company: document.getElementById('leadCompany').value,
@@ -798,7 +805,10 @@ footer { background: var(--navy); padding: clamp(28px, 4vw, 44px) var(--pad) cal
         btn.disabled = false; btn.textContent = 'Claim My Free Consultation →';
         return fail('Something went wrong — please try again or call (855) 458-9911.');
       }
-      dl.push({ event: 'lead_form_submit', form_name: 'novidocs_consultation', event_id: eventId, sms_consent: sms.checked ? 'yes' : 'no', utm_source: at.utm_source || '', utm_medium: at.utm_medium || '', utm_campaign: at.utm_campaign || '' });
+      if (isQualified(answers) && typeof gtag === 'function') {
+        gtag('event', 'conversion', { 'send_to': 'AW-18501676925/EL2CCNyfzaIdEP3epPZE', 'value': 1.0, 'currency': 'USD', 'transaction_id': eventId });
+      }
+      dl.push({ event: 'lead_form_submit', form_name: 'novidocs_consultation', qualified: isQualified(answers) ? 'yes' : 'no', event_id: eventId, sms_consent: sms.checked ? 'yes' : 'no', utm_source: at.utm_source || '', utm_medium: at.utm_medium || '', utm_campaign: at.utm_campaign || '' });
       document.getElementById('doneName').textContent = parts[0] ? ', ' + parts[0] : '';
       panels.forEach(function (p) { p.classList.toggle('active', p.id === 'wizDone'); });
       bar.style.width = '100%'; stepEl.textContent = 'Complete'; back.hidden = true;

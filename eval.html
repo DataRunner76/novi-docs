@@ -200,7 +200,8 @@ footer p { max-width: 760px; margin: 8px auto 0; }
 
     <fieldset class="q" data-key="credit_range">
       <legend>Payment plans depend on credit approval for you or a co-signer. Roughly where is your credit? <span class="req">*</span></legend>
-      <label class="opt"><input type="radio" name="credit_range" value="Under 660">Under 660</label>
+      <label class="opt"><input type="radio" name="credit_range" value="Under 600">Under 600</label>
+      <label class="opt"><input type="radio" name="credit_range" value="600-659">600–659</label>
       <label class="opt"><input type="radio" name="credit_range" value="660-699">660–699</label>
       <label class="opt"><input type="radio" name="credit_range" value="700-739">700–739</label>
       <label class="opt"><input type="radio" name="credit_range" value="740+">740+</label>
@@ -275,9 +276,15 @@ footer p { max-width: 760px; margin: 8px auto 0; }
     loose_teeth_or_gum_disease: function (a) { return a.teeth_missing === '3 or fewer'; },
     financing_prequal: function (a) { return a.financing_interest === 'No'; },
     credit_range: function (a) { return a.financing_interest === 'Yes' || a.financing_prequal === 'Yes'; },
-    household_income: function (a) { return RULES.credit_range(a) && (a.credit_range === 'Under 660' || a.credit_range === '660-699'); }
+    household_income: function (a) { return RULES.credit_range(a) && ['Under 600', '600-659', '660-699'].indexOf(a.credit_range) > -1; }
   };
   function applies(q) { var rule = RULES[q.dataset.key]; return !rule || rule(answers); }
+
+  /* Qualified lead = doesn't need financing, or credit 600+. Only qualified leads are reported to Google Ads. */
+  function isQualified(a) {
+    if (a.financing_interest === 'No') return true;
+    return ['600-659', '660-699', '700-739', '740+'].indexOf(a.credit_range) > -1;
+  }
   function visible() { return all.filter(applies); }
   function render() {
     var vis = visible(), idx = vis.indexOf(all[cur]);
@@ -341,6 +348,7 @@ footer p { max-width: 760px; margin: 8px auto 0; }
       sms_consent_language: txt(sms), marketing_consent_language: txt(mkt),
       consent_timestamp: new Date().toISOString(), consent_page_url: location.href,
       consent_method: 'Website form — optional checkbox, unchecked by default',
+      qualified: isQualified(path) ? 'Yes' : 'No',
       brand: 'Novi Docs', location: 'Chicago, IL',
       source: location.hostname, form_name: 'novidocs_eval', event_id: eventId,
       company: document.getElementById('company').value, submitted_at: new Date().toISOString()
@@ -356,7 +364,10 @@ footer p { max-width: 760px; margin: 8px auto 0; }
     }
     if (!ok) { btn.disabled = false; btn.textContent = 'Continue'; return fail('Something went wrong — please try again or call (855) 458-9911.'); }
 
-    dl.push({ event: 'lead_form_submit', form_name: 'novidocs_eval', event_id: eventId, sms_consent: sms.checked ? 'yes' : 'no', utm_source: at.utm_source || '', utm_medium: at.utm_medium || '', utm_campaign: at.utm_campaign || '' });
+    if (isQualified(path) && typeof gtag === 'function') {
+      gtag('event', 'conversion', { 'send_to': 'AW-18501676925/EL2CCNyfzaIdEP3epPZE', 'value': 1.0, 'currency': 'USD', 'transaction_id': eventId });
+    }
+    dl.push({ event: 'lead_form_submit', form_name: 'novidocs_eval', qualified: isQualified(path) ? 'yes' : 'no', event_id: eventId, sms_consent: sms.checked ? 'yes' : 'no', utm_source: at.utm_source || '', utm_medium: at.utm_medium || '', utm_campaign: at.utm_campaign || '' });
     document.getElementById('doneName').textContent = ', ' + fn.value.trim();
     form.hidden = true;
     all.forEach(function (q) { q.classList.remove('active'); });
