@@ -11,6 +11,23 @@
 
   gtag('config', 'AW-18501676925');
 </script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1137478235869537');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1137478235869537&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Full-Arch Dental Implants in Chicago, IL | Free Consultation | Novi Docs</title>
 <meta name="description" content="Fixed, full-arch dental implants in Chicago. Licensed dental surgeons, every option explained, payment plans available. Book your free consultation.">
@@ -805,8 +822,9 @@ footer { background: var(--navy); padding: clamp(28px, 4vw, 44px) var(--pad) cal
         btn.disabled = false; btn.textContent = 'Claim My Free Consultation →';
         return fail('Something went wrong — please try again or call (855) 458-9911.');
       }
-      if (isQualified(answers) && typeof gtag === 'function') {
-        gtag('event', 'conversion', { 'send_to': 'AW-18501676925/EL2CCNyfzaIdEP3epPZE', 'value': 1.0, 'currency': 'USD', 'transaction_id': eventId });
+      if (isQualified(answers)) {
+        if (typeof gtag === 'function') gtag('event', 'conversion', { 'send_to': 'AW-18501676925/EL2CCNyfzaIdEP3epPZE', 'value': 1.0, 'currency': 'USD', 'transaction_id': eventId });
+        if (typeof fbq === 'function') fbq('track', 'Lead', { value: 1.0, currency: 'USD' }, { eventID: eventId });
       }
       dl.push({ event: 'lead_form_submit', form_name: 'novidocs_consultation', qualified: isQualified(answers) ? 'yes' : 'no', event_id: eventId, sms_consent: sms.checked ? 'yes' : 'no', utm_source: at.utm_source || '', utm_medium: at.utm_medium || '', utm_campaign: at.utm_campaign || '' });
       document.getElementById('doneName').textContent = parts[0] ? ', ' + parts[0] : '';
